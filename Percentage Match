@@ -1,0 +1,47 @@
+Sub StrPercent()
+
+Application.ScreenUpdating = False
+
+LR = Sheets("Sheet1").Cells(Rows.Count, 1).End(xlUp).Row
+
+With Sheets("Sheet3")
+    .Range("A1:A" & LR).Value = Sheets("Sheet1").Range("A1:A" & LR).Value
+    .Range("B1:B" & LR).Value = Sheets("Sheet2").Range("A1:A" & LR).Value
+
+    For r = 2 To LR
+        If Trim(.Cells(r, "A").Value) = Trim(.Cells(r, "B").Value) Then
+            .Cells(r, "C").Value = 1
+            GoTo NextR
+        End If
+
+        Str1 = Trim(.Cells(r, "A").Value)
+        Str2 = Trim(.Cells(r, "B").Value)
+        Len1 = Len(Str1)
+        Len2 = Len(Str2)
+        Same = 0
+        
+        If Len1 > Len2 Then
+            For c = 1 To Len2
+                If InStr(1, Str1, Mid(Str2, c, 1), 1) Then
+                    Same = Same + 1
+                    Str1 = Replace(Str1, Mid(Str2, c, 1), "*", 1, 1)
+                End If
+            Next c
+            .Cells(r, "C").Value = Same / Len1
+        Else
+            For c = 1 To Len2
+                If InStr(1, Str1, Mid(Str2, c, 1), 1) Then
+                    Same = Same + 1
+                    Str1 = Replace(Str1, Mid(Str2, c, 1), "*", 1, 1)
+                End If
+            Next c
+           .Cells(r, "C").Value = Same / Len2
+        End If
+
+NextR:
+    Next r
+
+End With
+
+Application.ScreenUpdating = True
+End Sub
