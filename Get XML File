@@ -1,0 +1,15 @@
+Sub GetFile()
+
+Dim varFile As Variant
+
+varFile = Application.GetOpenFilename("XML files (*.xml), *.xml", , "Select a file", , False)
+If varFile = False Then
+    Exit Sub
+Else
+    Sheets("Credentials").Range("C3").Value = varFile
+End If
+
+' AUTOFIT THE COLUMNS
+Sheets("Credentials").Range("C:C").EntireColumn.AutoFit
+
+End Sub
