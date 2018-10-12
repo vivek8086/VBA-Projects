@@ -1,0 +1,76 @@
+Sub FetchTableData()
+
+'Declare variables'
+
+Set conn = CreateObject("ADODB.Connection")
+Set objMyCmd = CreateObject("ADODB.Command")
+Set rs = CreateObject("ADODB.Recordset")
+      
+Dim DBName          As String
+Dim HostName        As String
+Dim UserID          As String
+Dim Password        As String
+Dim Region          As String
+Dim Quotes          As String: Quotes = """"
+
+DBName = "DBName"  ' Use SELECT CURRENT SERVER FROM SYSIBM.SYSDUMMY1
+HostName = "HOSTNAME.DOMAIN.COM"
+UserID = Sheets("Credentials").Range("C7").Value
+Password = Sheets("Credentials").Range("C8").Value
+Region = (Sheets("Credentials").Range("C10").Value)
+
+conn.Open "Driver={IBM DB2 ODBC DRIVER};Database=" & DBName & ";Hostname=" & HostName & ";Port=123;Protocol=TCPIP;Uid=" & UserID & ";Pwd=" & Password & ""
+
+' Set Sheet1 as active
+Worksheets("XML & DB2 Data").Activate
+
+Dim Tablenm As String
+
+Dim ComTable As String
+
+Dim strSQL As String
+
+Dim cellr As Range
+    
+' Find the last row in TempSheet_1
+    With Sheets("XML & DB2 Data")
+        Last_row = .Range("D" & .Rows.Count).End(xlUp).Row
+    End With
+    
+    Dim Current_Row As Long
+    Current_Row = 5
+    
+' Iterate until the last
+
+For row_num = Current_Row To Last_row
+            
+    If (Sheets("XML & DB2 Data").Range("F" & row_num).Value = "Y" Or Sheets("XML & DB2 Data").Range("F" & row_num).Value = "y") Then
+    
+            TempSQL = Sheets("XML & DB2 Data").Range("L" & row_num).Value
+            
+            strSQL = "SELECT " & TempSQL & """"
+            
+            Set rs = conn.Execute(strSQL)
+            
+            If Not rs.EOF Then
+                Sheets("XML & DB2 Data").Range("I" & row_num).NumberFormat = "@"
+                Sheets("XML & DB2 Data").Range("I" & row_num).Value = rs.Fields(0).Value
+                Sheets("XML & DB2 Data").Range("I" & row_num).Value = LTrim(Sheets("XML & DB2 Data").Range("I" & row_num).Value)
+                Sheets("XML & DB2 Data").Range("I" & row_num).Value = RTrim(Sheets("XML & DB2 Data").Range("I" & row_num).Value)
+            
+                Sheets("XML & DB2 Data").Range("I" & row_num).HorizontalAlignment = xlRight
+            Else
+                Sheets("XML & DB2 Data").Range("I" & row_num).Value = "No value returned"
+                Sheets("XML & DB2 Data").Range("I" & row_num).Interior.ColorIndex = 22
+            End If
+    End If
+                
+    Current_Row = Current_Row + 1
+    Row = row_num + 1
+
+Next
+
+Sheets("XML & DB2 Data").Range("I:I").EntireColumn.AutoFit
+
+End Sub
+
