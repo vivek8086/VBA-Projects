@@ -1,0 +1,189 @@
+Sub ParseXML()
+    Dim xmlDoc      As MSXML2.DOMDocument60
+    Dim xmlNodeList As MSXML2.IXMLDOMNodeList
+    Dim xmlNode     As MSXML2.IXMLDOMNode
+    Dim myNode      As MSXML2.IXMLDOMNode
+
+    ' Create an Instance of the DOMDocument
+    Set xmlDoc = New MSXML2.DOMDocument60
+    xmlDoc.async = False
+
+    Dim strPathToXMLFile As String
+    ' Load XML information from a file. In this case, Cell C3 of Sheet "XML & DB2 Data" should contain the path of the XML
+    strPathToXMLFile = Sheets("Credentials").Range("C3").Value
+    xmlDoc.validateOnParse = True
+
+    If Not xmlDoc.Load(strPathToXMLFile) Then
+        MsgBox "Problem"
+        Exit Sub
+    End If
+
+    ' Find out the number of child nodes in the file
+    Set xmlNodeList = xmlDoc.getElementsByTagName("*")
+
+    ' Open a new workbook and paste the data
+    Sheets.Add
+    ActiveSheet.Name = "TempSheet_1"
+    Range("A1:B1").Formula = Array("Element Name", "Text")
+
+    For Each xmlNode In xmlNodeList
+        For Each myNode In xmlNode.ChildNodes
+            If myNode.NodeType = NODE_TEXT Then
+                ActiveCell.Offset(0, 0).NumberFormat = "@"
+                ActiveCell.Offset(0, 1).NumberFormat = "@"
+                ActiveCell.Offset(0, 0).Formula = myNode.ParentNode.ParentNode.BaseName & ":" & xmlNode.nodeName
+                ActiveCell.Offset(0, 1).Formula = xmlNode.Text
+            End If
+        Next myNode
+
+        ActiveCell.Offset(1, 0).Select
+    Next xmlNode
+
+    Columns("A:B").AutoFit
+    
+' RIGHT ALLIGN THE VALUE TEXTS START
+ActiveSheet.Range("B1:B200").HorizontalAlignment = xlRight
+' RIGHT ALLIGN THE VALUE TEXTS END
+    
+' Prepare the header in main Sheet
+    Sheets("XML & DB2 Data").Range("A4").Value = "Join Columns"
+    Sheets("XML & DB2 Data").Range("C4:D4").Formula = Array("XML File extract/Field name", "Field Value")
+    Sheets("XML & DB2 Data").Range("F4:F4").Formula = Array("Require to validate (Y/N)")
+     
+    Sheets("XML & DB2 Data").Range("G4:L4").Formula = Array("Table details", "Column Details", "Table Value", "Match/Mismatch", "Pass/Fail", "SQL Query (Without SELECT Clause)")
+    
+' Color the heading
+    Sheets("XML & DB2 Data").Range("A4").Interior.ColorIndex = 34
+    Sheets("XML & DB2 Data").Range("C4:D4").Interior.ColorIndex = 34
+    Sheets("XML & DB2 Data").Range("F4:L4").Interior.ColorIndex = 34
+    
+' Border the header cells
+    Dim Border_rng As Range
+
+    Set Border_rng = Sheets("XML & DB2 Data").Range("A4")
+    Set Border_rng = Sheets("XML & DB2 Data").Range("C4:D4")
+    Set Border_rng = Sheets("XML & DB2 Data").Range("F4:L4")
+
+    With Border_rng.Borders
+        .LineStyle = xlContinuous
+        .Color = vbRed
+        .Weight = xlThin
+    End With
+    
+' work in progress:  Move around the cells
+    Dim row_num As Long
+
+' Find the last row in TempSheet_1
+    With Sheets("TempSheet_1")
+        Last_row = .Range("A" & .Rows.Count).End(xlUp).Row
+    End With
+    
+' DISPLAY TOTAL NUMBER OF PARSED ROWS
+' Sheets("XML & DB2 Data").Range("A12").Value = Last_row
+
+    Dim Current_Row As Long
+    Current_Row = 5
+    Dim Temp_Row As Long
+        
+    Dim Cell_Value, strToLeft, strToRight, Current_Header As String
+
+' Find First Record in TempSheet1
+
+Dim First_Row As Integer
+
+With Sheets("TempSheet_1")
+    First_Row = .Range("A:A").Find(what:=":", After:=.Range("A1")).Row
+End With
+
+' Iterate until the last
+    For row_num = First_Row To Last_row
+    
+        Cell_Value = Sheets("TempSheet_1").Range("A" & row_num).Value
+        
+        Sheets("XML & DB2 Data").Range("D" & row_num).NumberFormat = "@"
+        
+        If IsEmpty(Cell_Value) Then
+            Current_Header = ""
+        Else
+            strToLeft = Split(Cell_Value, ":")(0)
+            strToRight = Split(Cell_Value, ":")(1)
+            
+            If strToLeft <> Current_Header Then
+                Current_Header = strToLeft
+                
+
+                Sheets("XML & DB2 Data").Range("C" & Current_Row).Value = Current_Header
+                Sheets("XML & DB2 Data").Range("C" & Current_Row).Interior.ColorIndex = 35
+                Sheets("XML & DB2 Data").Range("C" & Current_Row & ":D" & Current_Row).Merge
+                                
+                Current_Row = Current_Row + 1
+                
+                Sheets("XML & DB2 Data").Range("C" & Current_Row) = strToRight
+                Sheets("XML & DB2 Data").Range("D" & Current_Row).Value = Range("B" & row_num).Value
+            Else
+                Sheets("XML & DB2 Data").Range("C" & Current_Row) = strToRight
+                Sheets("XML & DB2 Data").Range("D" & Current_Row).Value = Range("B" & row_num).Value
+            End If
+            
+            Current_Row = Current_Row + 1
+        End If
+        
+        Row = row_num + 1
+        Next
+
+' AUTOFIT THE COLUMNS
+Sheets("XML & DB2 Data").Range("A:A,C:C,D:D,E:E,F:F,G:G,H:H,I:I,J:J,K:K,L:L").EntireColumn.AutoFit
+
+' Delete the tempsheet_1
+    Application.DisplayAlerts = False
+    Sheets("TempSheet_1").Delete
+    Application.DisplayAlerts = True
+
+' Set Sheet1 as active
+    Worksheets("XML & DB2 Data").Activate
+    
+' RIGHT ALLIGN THE VALUE TEXTS START
+
+ActiveSheet.Range("D1:C2000").HorizontalAlignment = xlLeft
+
+'Border the cells
+
+Dim firstRow As Integer
+
+If ActiveSheet.Range("A1").Value = "" Then
+    firstRow = ActiveSheet.Range("C1").End(xlDown).Row
+Else
+    firstRow = 1
+End If
+
+Dim LastLine As Long
+
+LastLine = Columns(3).Find("*", , , , xlByColumns, xlPrevious).Row
+     
+    Dim BorderR As Range
+
+    Set BorderR = Worksheets("XML & DB2 Data").Range("A4")
+
+    With BorderR.Borders
+        .LineStyle = xlContinuous
+        .Color = vbBlack
+        .Weight = xlThin
+    End With
+    
+    Set BorderR = Worksheets("XML & DB2 Data").Range("C" & firstRow & ":D" & LastLine)
+
+    With BorderR.Borders
+        .LineStyle = xlContinuous
+        .Color = vbBlack
+        .Weight = xlThin
+    End With
+
+    Set BorderR = Worksheets("XML & DB2 Data").Range("F" & firstRow & ":L" & LastLine)
+
+    With BorderR.Borders
+        .LineStyle = xlContinuous
+        .Color = vbBlack
+        .Weight = xlThin
+    End With
+
+End Sub
