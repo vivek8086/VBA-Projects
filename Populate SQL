@@ -1,0 +1,107 @@
+Sub PopulateSQL()
+
+' Set Sheet1 as active
+Worksheets("XML & DB2 Data").Activate
+
+Dim Tablenm As String
+
+Dim ComTable As String
+
+Dim strSQL As String
+
+Dim cellr As Range
+
+Dim Table_Join_1, Table_Join_2, Table_Cell As String
+Dim Column_Join_1, Column_Join_2, Column_Cell As String
+
+Dim Region As String: Region = (Sheets("Credentials").Range("C10").Value)
+
+Dim LPosition As Integer: LPosition = 0
+
+' Find the Key Column in the XML
+'    With Sheets("XML & DB2 Data")
+'        Last_Key_row = .Range("E" & .Rows.Count).End(xlUp).Row
+'    End With
+
+'For row_num = 5 To Last_Key_row
+        
+'    If IsEmpty(Sheets("XML & DB2 Data").Range("E" & row_num).Value) = False Then
+'        Key_Column = Sheets("XML & DB2 Data").Range("E" & row_num)
+'        Key_Column_Value = "'" & Sheets("XML & DB2 Data").Range("D" & row_num) & "'"
+'    End If
+'
+'    Row = row_num + 1
+
+'Next
+
+If Not IsEmpty(Sheets("XML & DB2 Data").Range("A5").Value) Then
+    Join_Column_1 = Sheets("XML & DB2 Data").Range("A5").Value
+    If Not IsEmpty(Sheets("XML & DB2 Data").Range("A6").Value) Then
+        Join_Column_2 = Sheets("XML & DB2 Data").Range("A6").Value
+        If Not IsEmpty(Sheets("XML & DB2 Data").Range("A7").Value) Then
+            Join_Column_2 = Sheets("XML & DB2 Data").Range("A7").Value
+        End If
+    End If
+End If
+
+' Find the last row in TempSheet_1
+    With Sheets("XML & DB2 Data")
+        Last_row = .Range("D" & .Rows.Count).End(xlUp).Row
+    End With
+    
+    Dim Current_Row As Long
+    Current_Row = 5
+    
+' Iterate until the last
+For row_num = Current_Row To Last_row
+    
+    ' START: String_Search
+    ' Desc   This part of the code recognizes if the Tables are JOINed. IF LPosition > 0, then STRING "JOINS" Found
+    
+        LPosition = InStr(1, Sheets("XML & DB2 Data").Range("G" & row_num).Value, "JOINS")
+
+    ' END: String_Search
+
+    If (Sheets("XML & DB2 Data").Range("F" & row_num).Value = "Y" Or Sheets("XML & DB2 Data").Range("F" & row_num).Value = "y") Then
+    
+        Key_Column = Sheets("XML & DB2 Data").Range("H" & row_num).Value
+        
+        If Sheets("XML & DB2 Data").Range("H" & row_num).Value = Join_Column_1 Or Join_Column_2 Or Join_Column_3 Then
+            Key_Column_Value = "'" & Sheets("XML & DB2 Data").Range("D" & row_num) & "'"
+        End If
+        
+        If (LPosition > 0) Then
+            Table_Cell = Sheets("XML & DB2 Data").Range("G" & row_num).Value
+            
+            Join_Column = Split(Table_Cell, " ON ")(0)
+            Join_Cell = Split(Table_Cell, " ON ")(1)
+            
+            Table_Join_2 = Split(Join_Column, " JOINS ")(0)
+            Table_Join_1 = Split(Join_Column, " JOINS ")(1)
+            
+            ComTable_2 = (Region & "." & Table_Join_2)
+            ComTable_1 = (Region & "." & Table_Join_1)
+            
+            Column_Cell = Sheets("XML & DB2 Data").Range("H" & row_num).Value
+            strSQL = "" & ComTable_2 & "." & Column_Cell & " FROM " & ComTable_2 & " WHERE " & ComTable_2 & "." & Join_Cell & "=" & Key_Column_Value & ";"
+         Else
+            Column_Names = Sheets("XML & DB2 Data").Range("H" & row_num).Value
+            Tablenm = Sheets("XML & DB2 Data").Range("G" & row_num).Value
+            ComTable = (Region & "." & Tablenm)
+            strSQL = "" & Column_Names & " FROM " & ComTable & " WHERE " & Key_Column & "=" & Key_Column_Value & ";"
+        End If
+        
+       ' Sheets("XML & DB2 Data").Range("L" & row_num).Value = """" & strSQL & """"
+       Sheets("XML & DB2 Data").Range("L" & row_num).Value = strSQL
+        
+    End If
+    
+    Current_Row = Current_Row + 1
+    Row = row_num + 1
+
+Next
+
+Sheets("XML & DB2 Data").Range("L:L").EntireColumn.AutoFit
+
+End Sub
+
