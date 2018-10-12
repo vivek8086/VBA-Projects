@@ -1,0 +1,18 @@
+Sub ClearCell()
+    
+    Application.DisplayAlerts = False
+    Sheets("XML & DB2 Data").Delete
+    Application.DisplayAlerts = True
+    
+    Dim SheetName As String
+    SheetName = "XML & DB2 Data"
+    Sheets.Add(, ActiveSheet).Name = SheetName
+    
+    With Sheets("Credentials")
+       .Range("C3").Value = ""
+    End With
+
+' Set Sheet1 as active
+    Worksheets("Credentials").Activate
+
+End Sub
