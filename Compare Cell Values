@@ -1,0 +1,33 @@
+Sub Compare()
+Dim endRow As Long
+
+
+    With Sheets("XML & DB2 Data")
+
+        endRow = .Range("C999999").End(xlUp).Row
+        
+        For i = 5 To endRow
+                If (.Range("F" & i).Value = "Y" Or .Range("F" & i).Value = "y") Then
+                    If .Range("D" & i).Value = .Range("I" & i).Value Then
+                        .Range("J" & i).Value = "Match"
+                        .Range("J" & i).Interior.ColorIndex = 4
+                        .Range("K" & i).Value = "Pass"
+                        .Range("K" & i).Interior.ColorIndex = 4
+                    Else
+                        LCS = ""
+                        Call ComputeLCS(.Range("D" & i).Value, .Range("I" & i).Value, i)
+                        .Range("J" & i).Value = "No-Match"
+                        .Range("J" & i).Interior.ColorIndex = 3
+                        .Range("K" & i).Value = "Fail"
+                        .Range("K" & i).Interior.ColorIndex = 3
+                    End If
+                End If
+        Next i
+        
+        .Range("J:K").HorizontalAlignment = xlCenter
+    
+    End With
+
+' Set Sheet1 as active
+    Worksheets("XML & DB2 Data").Activate
+End Sub
